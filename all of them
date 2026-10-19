@@ -4,6 +4,8 @@ void	ft_bzero(void *s, size_t n)
 {
 	ft_memset(s, 0, n);
 }
+
+
 #include "libft.h"
 
 void	*ft_calloc(size_t nmemb, size_t size)
@@ -20,3 +22,3065 @@ void	*ft_calloc(size_t nmemb, size_t size)
 	ft_bzero(ptr, size * nmemb);
 	return (ptr);
 }
+
+#include "libft.h"
+
+int	ft_isalnum(int c)
+{
+	return (ft_isalpha(c) || ft_isdigit(c));
+}
+
+int	ft_isalpha(int c)
+{
+	unsigned char	ch_a;
+	unsigned char	ch_z;
+	unsigned char	ch_ac;
+	unsigned char	ch_zc;
+
+	ch_a = 'a';
+	ch_z = 'z';
+	ch_ac = 'A';
+	ch_zc = 'Z';
+	return ((c >= ch_a && c <= ch_z) || (c >= ch_ac && c <= ch_zc));
+}
+/*#include <stdio.h>
+int main(void)
+{
+	for (int i = 0; i < 256; i++)
+		printf("%d: %d\n", i, ft_isalpha(i));
+	return (0);
+}*/
+int	ft_isascii(int c)
+{
+	return (c >= 0 && c <= 127);
+}
+
+int	ft_isdigit(int c)
+{
+	unsigned char	zero;
+	unsigned char	nine;
+
+	zero = '0';
+	nine = '9';
+	return (c >= zero && c <= nine);
+}
+/*#include <stdio.h>
+int main(void)
+{
+	for (int i = -256; i < 256; i++)
+		printf("%d: %d\n", i, ft_isdigit(i));
+	return (0);
+}*/
+int	ft_isprint(int c)
+{
+	return (c >= 32 && c <= 126);
+}#include "libft.h"
+
+static long	absu(long n)
+{
+	if (n > 0)
+		return (n);
+	return (n * -1);
+}
+
+static int	num_len(long num)
+{
+	int	i;
+
+	i = 1;
+	if (num < 0)
+	{
+		num *= -1;
+		i++;
+	}
+	while (num >= 10)
+	{
+		num /= 10;
+		i++;
+	}
+	return (i);
+}
+
+char	*ft_itoa(int n)
+{
+	long	num;
+	int		sign;
+	char	*ptr;
+	int		i;
+
+	sign = 0;
+	if (n < 0)
+		sign = 1;
+	num = absu((long) n);
+	ptr = malloc(num_len((long) n) + 1);
+	if (!ptr)
+		return (NULL);
+	ptr[num_len(n)] = '\0';
+	i = (num_len(n) - 1);
+	while (i >= sign)
+	{
+		ptr[i] = ((num % 10) + '0');
+		num /= 10;
+		i--;
+	}
+	if (sign == 1)
+		ptr[i] = '-';
+	return (ptr);
+}
+/*
+// ---- paste from here at the bottom of ft_itoa.c ----
+// also add these includes at the top of the file if they are missing:
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <limits.h>
+
+static long	g_total = 0;
+static long	g_failed = 0;
+
+// compares ft_itoa(n) with the output of printf("%d", n), which is the reference
+// verbose == 1 prints one line per call, verbose == 0 prints only failures
+static void	check(int n, int verbose)
+{
+	char	*res;
+	char	exp[16];
+	int		ok;
+
+	ok = 1;
+	g_total++;
+	// the longest possible result is "-2147483648": 11 characters + terminator
+	snprintf(exp, sizeof(exp), "%d", n);
+	res = ft_itoa(n);
+	if (res == NULL)
+	{
+		ok = 0;
+		if (g_failed < 20)
+			printf("   -> n=%d: got NULL, expected \"%s\"\n", n, exp);
+	}
+	else
+	{
+		if (strcmp(res, exp) != 0)
+		{
+			ok = 0;
+			if (g_failed < 20)
+				printf("   -> n=%d: expected \"%s\", got \"%s\"\n", n, exp, res);
+		}
+		// length checked separately from content
+		if (strlen(res) != strlen(exp))
+		{
+			ok = 0;
+			if (g_failed < 20)
+				printf("   -> n=%d: length expected %zu, got %zu\n",
+					n, strlen(exp), strlen(res));
+		}
+		free(res);
+	}
+	if (verbose || !ok)
+		printf("[%s] ft_itoa(%d)\n", ok ? " OK " : "FAIL", n);
+	if (!ok)
+		g_failed++;
+}
+
+// small deterministic random generator (xorshift32) covering all 32 bits,
+// unlike rand() which only guarantees 15 bits
+static unsigned int	next_random(unsigned int *state)
+{
+	*state ^= *state << 13;
+	*state ^= *state >> 17;
+	*state ^= *state << 5;
+	return (*state);
+}
+
+int	main(int argc, char **argv)
+{
+	static const int	edges[] = {0, 1, -1, 2, -2, 9, -9, 10, -10, 11, -11,
+		42, -42, 99, -99, 100, -100, 101, -101, 999, -999, 1000, -1000,
+		12345, -12345, 65535, 65536, -65536, 2147483646, 2147483647,
+		-2147483647, INT_MAX, INT_MIN, INT_MAX - 1, INT_MIN + 1};
+	size_t				i;
+	long long			p;
+	long long			v;
+	unsigned int		state;
+	int					full;
+
+	full = (argc > 1 && strcmp(argv[1], "full") == 0);
+	// 1. hand-picked edge cases, printed one by one
+	printf("== edge cases ==\n");
+	i = 0;
+	while (i < sizeof(edges) / sizeof(edges[0]))
+		check(edges[i++], 1);
+	// 2. every power of ten, and its neighbours, positive and negative
+	// (digit count changes exactly at these boundaries)
+	printf("== powers of ten and neighbours ==\n");
+	p = 1;
+	while (p <= 1000000000LL)
+	{
+		check((int)p, 1);
+		check((int)(p - 1), 1);
+		check((int)(p + 1), 1);
+		check((int)-p, 1);
+		check((int)(-p - 1), 1);
+		check((int)(-p + 1), 1);
+		p *= 10;
+	}
+	// 3. every value from -1,000,000 to 1,000,000, failures only
+	printf("== sweep -1000000 .. 1000000 ==\n");
+	v = -1000000;
+	while (v <= 1000000)
+		check((int)v++, 0);
+	// 4. two million pseudo-random ints over the full range, failures only
+	printf("== 2000000 pseudo-random values ==\n");
+	state = 2463534242u;
+	i = 0;
+	while (i++ < 2000000)
+		check((int)next_random(&state), 0);
+	// 5. optional: the whole domain of int
+	if (full)
+	{
+		printf("== exhaustive: all 4294967296 ints ==\n");
+		v = INT_MIN;
+		while (v <= INT_MAX)
+		{
+			check((int)v, 0);
+			if ((v & 0x0FFFFFFF) == 0)
+				printf("   ... reached %lld\n", v);
+			v++;
+		}
+	}
+	printf("\n%ld/%ld checks passed%s\n", g_total - g_failed, g_total,
+		full ? " (exhaustive)" : "");
+	return (g_failed != 0);
+}*/
+
+
+#include "libft.h"
+
+void	ft_lstadd_back(t_list **lst, t_list *new)
+{
+	t_list	*last;
+
+	if (!lst || !new)
+		return ;
+	last = ft_lstlast(*lst);
+	if (!last)
+	{
+		ft_lstadd_front(lst, new);
+		return ;
+	}
+	last->next = new;
+}
+
+#include "libft.h"
+
+void	ft_lstadd_front(t_list **lst, t_list *new)
+{
+	if (!lst || !new)
+		return ;
+	new->next = (*lst);
+	*lst = new;
+}
+
+/*#include <stdio.h>
+int main(void)
+{
+	int value = 90;
+	int value2 = 505;
+	t_list **list;
+	t_list *ex_start = ft_lstnew(&value);
+	t_list *new_start = ft_lstnew(&value2);
+	list = &ex_start;
+	ft_lstadd_front(list, new_start);
+	printf("%d ",*((int *)((*list)->content)));
+	return (0);
+}*/#include "libft.h"
+
+void	ft_lstclear(t_list **lst, void (*del)(void*))
+{
+	t_list	*temp;
+	t_list	*temp2;
+
+	if (!lst || !del)
+		return ;
+	temp = *lst;
+	while (temp)
+	{
+		temp2 = temp->next;
+		ft_lstdelone(temp, del);
+		temp = temp2;
+	}
+	*lst = NULL;
+}#include "libft.h"
+
+/*void	delete(void *content)
+{
+	free(content);
+}*/
+
+void	ft_lstdelone(t_list *lst, void (*del)(void*))
+{
+	if (!lst || !del)
+		return ;
+	del(lst->content);
+	free(lst);
+}
+
+/*int main(void)
+{
+	int *num = malloc(sizeof(int));
+	t_list *head = ft_lstnew(num);
+	ft_lstdelone(head, delete);
+	return (0);
+}*/
+#include "libft.h"
+
+void	ft_lstiter(t_list *lst, void (*f)(void *))
+{
+	t_list	*temp;
+
+	if (!lst || !f)
+		return ;
+	temp = lst;
+	while (temp)
+	{
+		f(temp->content);
+		temp = temp->next;
+	}
+}#include "libft.h"
+
+t_list	*ft_lstlast(t_list *lst)
+{
+	if (!lst)
+		return (NULL);
+	while (lst->next)
+		lst = lst->next;
+	return (lst);
+}
+
+/*#include <stdio.h>
+int main(void)
+{
+	int content = 0;
+	int cont_last = 1;	
+	t_list	*head = ft_lstnew(&content);
+	t_list	*second = ft_lstnew(&content);
+	head->next = second;
+	t_list	*third = ft_lstnew(&cont_last);
+	second->next = third;
+	printf("%p\n", ft_lstlast(NULL));
+	printf("%d\n", *((int *)(ft_lstlast(head)->content)));
+	return (0);
+}*/
+
+#include "libft.h"
+
+t_list	*ft_lstmap(t_list *lst, void *(*f)(void *), void (*del)(void *))
+{
+	t_list	*head;
+	t_list	*new;
+	void	*content;
+
+	if (!lst || !f || !del)
+		return (NULL);
+	head = NULL;
+	while (lst)
+	{
+		content = f(lst->content);
+		new = ft_lstnew(content);
+		if (!new)
+		{
+			del(content);
+			ft_lstclear(&head, del);
+			return (NULL);
+		}
+		ft_lstadd_back(&head, new);
+		lst = lst->next;
+	}
+	return (head);
+}
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_lstnew.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/10/02 18:55:19 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/10/02 20:53:47 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+t_list	*ft_lstnew(void *content)
+{
+	t_list	*node;
+
+	node = malloc (1 * sizeof(*node));
+	if (!node)
+		return (NULL);
+	node->content = content;
+	node->next = NULL;
+	return (node);
+}
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static int	g_fail = 0;
+
+static void	check(int condition, const char *msg)
+{
+	if (condition)
+		printf("[OK]   %s\n", msg);
+	else
+	{
+		printf("[FAIL] %s\n", msg);
+		g_fail++;
+	}
+}
+
+int	main(void)
+{
+	t_list	*n;
+	t_list	*a;
+	t_list	*b;
+	char	*str;
+	int		*num;
+	int		local;
+	void	*dirty;
+	int		i;
+
+	//TEST 1: heap string as content
+	printf("\n--- Test 1: string content ---\n");
+	str = strdup("hello");
+	n = ft_lstnew(str);
+	check(n != NULL, "returns non-NULL pointer");
+	check(n->content == str, "content holds the SAME address given");
+	check(strcmp((char *)n->content, "hello") == 0, "content data intact");
+	check(n->next == NULL, "next is NULL");
+	free(n->content);
+	free(n);
+
+	//TEST 2: NULL as content *
+	printf("\n--- Test 2: NULL content ---\n");
+	n = ft_lstnew(NULL);
+	check(n != NULL, "node still allocated when content is NULL");
+	check(n->content == NULL, "content is NULL");
+	check(n->next == NULL, "next is NULL");
+	free(n);
+
+	//TEST 3: heap int as content
+	printf("\n--- Test 3: int content ---\n");
+	num = malloc(sizeof(int));
+	*num = 42;
+	n = ft_lstnew(num);
+	check(n != NULL, "returns non-NULL pointer");
+	check(*(int *)n->content == 42, "int value readable through content");
+	check(n->next == NULL, "next is NULL");
+	free(n->content);
+	free(n);
+
+	// TEST 4: content must be stored by pointer, not copied 
+	printf("\n--- Test 4: no copy of content ---\n");
+	local = 7;
+	n = ft_lstnew(&local);
+	check(n->content == &local, "content == &local (pointer stored as-is)");
+	local = 99;
+	check(*(int *)n->content == 99, "change to local is visible via content");
+	free(n);
+
+	// TEST 5: two nodes are independent allocations 
+	printf("\n--- Test 5: independent nodes ---\n");
+	a = ft_lstnew("A");
+	b = ft_lstnew("B");
+	check(a != b, "two calls return different addresses");
+	check(a->next == NULL && b->next == NULL, "both next are NULL");
+	check(a->content != b->content, "contents are different");
+	free(a);
+	free(b);
+
+	// TEST 6: next must be set even if malloc returns dirty memory 
+	printf("\n--- Test 6: next initialised on dirty memory ---\n");
+	dirty = malloc(sizeof(t_list));
+	memset(dirty, 0xFF, sizeof(t_list));
+	free(dirty);
+	n = ft_lstnew(NULL);
+	check(n->next == NULL, "next is NULL even after dirty chunk was freed");
+	free(n);
+
+	// TEST 7: many allocations, all freed -> leak check 
+	printf("\n--- Test 7: 1000 nodes created and freed ---\n");
+	for (i = 0; i < 1000; i++)
+	{
+		n = ft_lstnew(NULL);
+		if (!n || n->next != NULL)
+		{
+			g_fail++;
+			break ;
+		}
+		free(n);
+	}
+	check(i == 1000, "all 1000 allocations succeeded and next was NULL");
+
+printf("\n%s (%d failure(s))\n", g_fail ? "SOME F" : "ALL PASS", g_fail);
+	return (g_fail != 0);
+}*/#include "libft.h"
+
+unsigned int	ft_lstsize(t_list *lst)
+{
+	unsigned int		i;
+
+	if (!lst)
+		return (0);
+	i = 0;
+	while (lst)
+	{
+		i++;
+		lst = lst->next;
+	}
+	return (i);
+}
+
+/*#include <stdio.h>
+int main(void)
+{
+	int	num = 1;
+	int	num2 = 2;
+	int	num3 = 3;
+
+	t_list *first = ft_lstnew(&num);
+	t_list *second = ft_lstnew(&num2);
+	t_list *third = ft_lstnew(&num3);
+	first->next = second;
+	second->next = third;
+	printf("%d\n%d\n", ft_lstsize(first), ft_lstsize(NULL));
+	return (0);
+}*/
+#include "libft.h"
+
+void	*ft_memchr(const void *s, int c, size_t n)
+{
+	size_t	i;
+
+	i = 0;
+	while (i < n)
+	{
+		if (*(((unsigned char *)s) + i) == (unsigned char) c)
+			return ((void *)(((unsigned char *) s) + i));
+		i++;
+	}
+	return (NULL);
+}
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_memcmp.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/26 16:28:13 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/09/27 17:18:54 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+int	ft_memcmp(const void *s1, const void *s2, size_t n)
+{
+	size_t			i;
+	unsigned char	*mem1;
+	unsigned char	*mem2;
+
+	mem1 = (unsigned char *) s1;
+	mem2 = (unsigned char *) s2;
+	i = 0;
+	while (i < n && mem1[i] == mem2[i])
+		i++;
+	if (i == n)
+		return (0);
+	return (mem1[i] - mem2[i]);
+}
+
+/*#include <stdio.h>
+#include <string.h>
+
+int	ft_memcmp(const void *s1, const void *s2, size_t n);
+
+int	main(void)
+{
+	int	std_ret;
+	int	ft_ret;
+
+	// 1. Identical strings
+	std_ret = memcmp("hello", "hello", 5);
+	ft_ret = ft_memcmp("hello", "hello", 5);
+	printf("1. Identical strings\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 2. First string is smaller
+	std_ret = memcmp("abc", "abd", 3);
+	ft_ret = ft_memcmp("abc", "abd", 3);
+	printf("2. First string is smaller\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 3. First string is greater
+	std_ret = memcmp("abd", "abc", 3);
+	ft_ret = ft_memcmp("abd", "abc", 3);
+	printf("3. First string is greater\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 4. Difference in the middle
+	std_ret = memcmp("hello", "heLlo", 5);
+	ft_ret = ft_memcmp("hello", "heLlo", 5);
+	printf("4. Difference in the middle\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 5. n = 0
+	std_ret = memcmp("hello", "world", 0);
+	ft_ret = ft_memcmp("hello", "world", 0);
+	printf("5. n = 0\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 6. Difference outside n
+	std_ret = memcmp("hello", "world", 1);
+	ft_ret = ft_memcmp("hello", "world", 1);
+	printf("6. Only first byte compared\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 7. Difference after first few bytes
+	std_ret = memcmp("abcdef", "abcxyz", 3);
+	ft_ret = ft_memcmp("abcdef", "abcxyz", 3);
+	printf("7. Difference outside comparison range\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 8. Difference inside n
+	std_ret = memcmp("abcdef", "abcxyz", 4);
+	ft_ret = ft_memcmp("abcdef", "abcxyz", 4);
+	printf("8. Difference inside comparison range\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 9. Empty strings
+	std_ret = memcmp("", "", 0);
+	ft_ret = ft_memcmp("", "", 0);
+	printf("9. Empty strings\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 10. One string is a prefix
+	std_ret = memcmp("abc", "abcdef", 3);
+	ft_ret = ft_memcmp("abc", "abcdef", 3);
+	printf("10. Same first n bytes\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 11. Binary data
+	{
+		unsigned char	a[] = {0x00, 0x01, 0x02, 0xFF};
+		unsigned char	b[] = {0x00, 0x01, 0x03, 0xFF};
+
+		std_ret = memcmp(a, b, 4);
+		ft_ret = ft_memcmp(a, b, 4);
+		printf("11. Binary data\n");
+		printf("   std: %d\n", std_ret);
+		printf("   ft : %d\n\n", ft_ret);
+	}
+
+	// 12. Unsigned byte comparison
+	{
+		unsigned char	a[] = {0xFF};
+		unsigned char	b[] = {0x01};
+
+		std_ret = memcmp(a, b, 1);
+		ft_ret = ft_memcmp(a, b, 1);
+		printf("12. 0xFF vs 0x01\n");
+		printf("   std: %d\n", std_ret);
+		printf("   ft : %d\n\n", ft_ret);
+	}
+
+	return (0);
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_memcpy.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/26 09:15:18 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/09/27 13:59:53 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+void	*ft_memcpy(void *dest, const void *src, size_t n)
+{
+	size_t	i;
+
+	i = 0;
+	while (i < n)
+	{
+		*(((unsigned char *) dest) + i) = *(((unsigned char *) src) + i);
+		i++;
+	}
+	return (dest);
+}
+/*#include <stdio.h>
+#include <string.h>
+
+int main() {
+
+    // Initialize a variable
+    int a = 20;
+    int b = 10;
+
+    printf("Value of b before calling memcpy: %d\n", b);
+
+    // Use memcpy to copy the value of 'a' into 'b'
+    ft_memcpy(&b, &a, sizeof(int));
+
+    printf("Value of b after calling memcpy: %d\n", b);
+
+    char str1[] = "rand";
+    char str2[6] = "";
+
+    // Copies contents of str1 to str2
+    ft_memcpy(str2, str1, 6);
+
+    printf("str2 after memcpy:");
+    printf("%s",str2);
+
+    return 0;
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_memmove.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/26 09:28:00 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/10/02 23:38:49 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+void	*ft_memmove(void *dest, const void *src, size_t n)
+{
+	size_t	i;
+
+	if (src < dest)
+	{
+		i = n;
+		while (i > 0)
+		{
+			i--;
+			*(((unsigned char *) dest) + i) = *(((unsigned char *) src) + i);
+		}
+	}
+	else
+	{
+		i = 0;
+		while (i < n)
+		{
+			*(((unsigned char *) dest) + i) = *(((unsigned char *) src) + i);
+			i++;
+		}
+	}
+	return (dest);
+}
+/*#include <stdio.h>
+#include <string.h>
+void *ft_memcpy(void *dest, const void *src, size_t n);
+int main()
+{
+    char str1[100] = "Learningisfun";
+    char str2[100] = "Learningisfun";
+
+    printf("Original string (str1) : %s\n", str1);
+    printf("Original string (str2) : %s\n", str2);
+
+    // Using memcpy on first copy
+   printf("memcpy dest  : %s\n", (char*)ft_memcpy(str1 + 8, str1, 13));
+
+    // Using memmove on second independent copy
+    printf("memmove dest : %s\n", (char*)ft_memmove(str2 + 8, str2, 13));
+
+    return 0;
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_memset.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/23 16:40:47 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/09/27 14:18:13 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+void	*ft_memset(void *s, int c, size_t n)
+{
+	size_t	i;
+
+	i = 0;
+	while (i < n)
+	{
+		*(((unsigned char *)s) + i) = (unsigned char)c;
+		i++;
+	}
+	return (s);
+}
+
+/*#include <stdio.h>
+#include <string.h>
+
+int main()
+{
+    char str[10] = "0123456789";
+    char str2[10] = "0123456789";
+    int n = 0;
+    int size = 15;
+   // printf("\nBefore memset(): %s\n", str);
+   // memset(str + n, '.', size*sizeof(char));
+   // printf("After memset():  %s", str);
+
+    printf("\nMINE Before memset(): %ld\n", (str2 - str));
+    //ft_memset(str2 + n, '.', size*sizeof(char));
+    //printf("After memset():  %s", str2);
+    return 0;
+}*/#include "libft.h"
+
+void	ft_putchar_fd(char c, int fd)
+{
+	write(fd, &c, 1);
+}
+
+/*int main(void)
+{
+	ft_putchar_fd('R', 1);
+	return (0);
+}*/#include "libft.h"
+
+void	ft_putendl_fd(char *s, int fd)
+{
+	ft_putstr_fd(s, fd);
+	write(fd, "\n", 1);
+}
+
+/*int main(void)
+{
+	ft_putendl_fd("Do I Wanna Know?", 1);
+	return (0);
+}*/#include "libft.h"
+
+static void	ft_long_putnbr_fd(long num, int fd)
+{
+	char	c;
+
+	if (num == 0)
+		return ;
+	c = (num % 10) + '0';
+	ft_long_putnbr_fd(num / 10, fd);
+	write (fd, &c, 1);
+}
+
+void	ft_putnbr_fd(int n, int fd)
+{
+	long	num;
+
+	num = n;
+	if (num == 0)
+	{
+		write (fd, "0", 1);
+		return ;
+	}
+	if (num < 0)
+	{
+		num *= -1;
+		write (fd, "-", 1);
+	}
+	ft_long_putnbr_fd (num, fd);
+}
+
+/*#include <limits.h>
+int main (void)
+{
+	ft_putnbr_fd(INT_MAX, 1);
+	return (0);
+}*/#include "libft.h"
+
+void	ft_putstr_fd(char *s, int fd)
+{
+	size_t	i;
+
+	if (!s)
+		return ;
+	i = 0;
+	while (s[i] != '\0')
+	{
+		write(fd, (s + i), 1);
+		i++;
+	}
+}
+
+/*int main(void)
+{
+	ft_putstr_fd(NULL, 1);
+	return (0);
+}*/#include "libft.h"
+
+static int	count_words(char const *s, char c)
+{
+	int	inword;
+	int	i;
+	int	count;
+
+	count = 0;
+	i = 0;
+	inword = 0;
+	while (s[i])
+	{
+		if (s[i] != c && inword == 0)
+		{
+			inword = 1;
+			count++;
+		}
+		if (s[i] == c && inword == 1)
+			inword = 0;
+		i++;
+	}
+	return (count);
+}
+
+static char	*ft_strdup_uptoc(char const *s, int *i, char c)
+{
+	int		j;
+	char	*newstr;
+
+	j = *i;
+	while (s[j] && s[j] != c)
+		j++;
+	newstr = malloc(sizeof(char) * (j - *i + 1));
+	if (!newstr)
+		return (NULL);
+	j = 0;
+	while (s[*i] && s[*i] != c)
+	{
+		newstr[j] = s[*i];
+		(*i)++;
+		j++;
+	}
+	newstr[j] = '\0';
+	return (newstr);
+}
+
+static void	ft_clear(char	***strs, int ptrsc)
+{
+	int	i;
+
+	i = 0;
+	while (i < ptrsc)
+	{
+		free((*strs)[i]);
+		i++;
+	}
+	free(*strs);
+}
+
+static char	**corelogic(char const *s, char c, int words, char ***strs)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	j = 0;
+	while (s[i])
+	{
+		if (s[i] == c)
+			i++;
+		else
+		{
+			(*strs)[j] = ft_strdup_uptoc(s, &i, c);
+			if (!(*strs)[j])
+			{
+				ft_clear(strs, j);
+				return (NULL);
+			}
+			j++;
+		}
+	}
+	(*strs)[words] = NULL;
+	return (*strs);
+}
+
+char	**ft_split(char const *s, char c)
+{
+	char	**strs;
+	int		words;
+
+	if (!s)
+		return (NULL);
+	words = count_words(s, c);
+	if (words > 0)
+		strs = malloc(sizeof(char *) * (words + 1));
+	else
+	{
+		strs = malloc(sizeof(char *) * 1);
+		if (!strs)
+			return (NULL);
+		strs[0] = NULL;
+		return (strs);
+	}
+	if (!strs)
+		return (NULL);
+	return (corelogic(s, c, words, &strs));
+}
+
+/*#include <stdio.h>
+int main(int argc, char **argv)
+{
+	if (argc < 2)
+		return (0);
+	char	**strs = ft_split(argv[1], ' ');
+	printf("input: %s\nword count: %d\n", argv[1], count_words(argv[1], ' '));
+	if (strs)
+		for(int i = 0; strs[i] != NULL; i++)
+			printf("%s\n", strs[i]);
+	else printf("NULL!!!");
+	if (strs) ft_clear(&strs, count_words(argv[1], ' ')+1);
+	return (0);
+}*/#include "libft.h"
+
+char	*ft_strchr(const char *s, int c)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i] != '\0' && s[i] != (char) c)
+		i++;
+	if ((char) c != s[i])
+		return (NULL);
+	return ((char *) s + i);
+}
+
+/*#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char str[] = "GeeksforGeeks";
+	char *us;
+	char *ptr = ft_strchr(us, '\0');
+    if (ptr != NULL)
+        printf("Character found at position: %ld\n", ptr - str);
+    else
+        printf("Character not found\n");
+
+    return 0;
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_strdup.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/28 14:46:55 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/09/28 17:34:31 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+char	*ft_strdup(const char *s)
+{
+	size_t			len;
+	char			*ptr;
+	size_t			i;
+
+	i = 0;
+	len = ft_strlen(s);
+	ptr = malloc(sizeof(unsigned char) * len + 1);
+	if (ptr == NULL)
+		return (NULL);
+	while (s[i] != '\0')
+	{
+		ptr[i] = s[i];
+		i++;
+	}
+	ptr[i] = '\0';
+	return (ptr);
+}
+
+/*#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char	*ft_strdup(const char *s);
+
+static void	test_string(const char *str)
+{
+	char	*std;
+	char	*ft;
+	int		content_ok;
+	int		separate;
+
+	std = strdup(str);
+	ft = ft_strdup(str);
+
+	content_ok = (std && ft && strcmp(std, ft) == 0);
+	separate = (std && ft && std != ft);
+
+	printf("\"%s\": ", str);
+
+	if (content_ok && separate)
+		printf("OK");
+	else
+	{
+		printf("FAIL");
+		if (!std || !ft)
+			printf(" [NULL]");
+		else if (!content_ok)
+			printf(" [CONTENT DIFFERENT]");
+		else if (!separate)
+			printf(" [SAME POINTER]");
+	}
+
+	printf("\n");
+
+	free(std);
+	free(ft);
+}
+
+static void	test_empty_string(void)
+{
+	char	*std;
+	char	*ft;
+
+	printf("\n=== Empty string ===\n");
+
+	std = strdup("");
+	ft = ft_strdup("");
+
+	if (std && ft && strcmp(std, ft) == 0 && std != ft)
+		printf("Empty string: OK\n");
+	else
+		printf("Empty string: FAIL\n");
+
+	free(std);
+	free(ft);
+}
+
+static void	test_independence(void)
+{
+	char	original[] = "Hello, world!";
+	char	*std;
+	char	*ft;
+
+	printf("\n=== Independent allocation ===\n");
+
+	std = strdup(original);
+	ft = ft_strdup(original);
+
+	if (!std || !ft)
+	{
+		printf("Allocation: FAIL\n");
+		free(std);
+		free(ft);
+		return;
+	}
+
+	// Change the original after duplicating it.
+	original[0] = 'X';
+
+	if (strcmp(ft, "Hello, world!") == 0
+		&& strcmp(std, "Hello, world!") == 0)
+		printf("Original modification: OK\n");
+	else
+		printf("Original modification: FAIL\n");
+
+	free(std);
+	free(ft);
+}
+
+static void	test_special_characters(void)
+{
+	printf("\n=== Special characters ===\n");
+
+	test_string(" ");
+	test_string("     ");
+	test_string("Hello World!");
+	test_string("1234567890");
+	test_string("!@#$%^&*()");
+	test_string("Hello\\nWorld");
+	test_string("\\t\\tHello\\t");
+	test_string("a b c d");
+}
+
+static void	test_long_string(void)
+{
+	char	*str;
+	char	*std;
+	char	*ft;
+	size_t	i;
+	int		ok;
+
+	printf("\n=== Long string ===\n");
+
+	str = malloc(10001);
+	if (!str)
+	{
+		printf("Could not create test string\n");
+		return;
+	}
+
+	i = 0;
+	while (i < 10000)
+	{
+		str[i] = 'A' + (i % 26);
+		i++;
+	}
+	str[10000] = '\0';
+
+	std = strdup(str);
+	ft = ft_strdup(str);
+
+	ok = 1;
+
+	if (!std || !ft)
+		ok = 0;
+	else if (strcmp(std, ft) != 0)
+		ok = 0;
+	else if (std == ft)
+		ok = 0;
+
+	printf("10000 character string: %s\n", ok ? "OK" : "FAIL");
+
+	free(str);
+	free(std);
+	free(ft);
+}
+
+static void	test_many_strings(void)
+{
+	const char	*tests[] = {
+		"a",
+		"abc",
+		"Hello",
+		"Hello world",
+		"42",
+		"42 School",
+		"libft",
+		"ft_strdup",
+		"0123456789",
+		"abcdefghijklmnopqrstuvwxyz",
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+		"hello\nworld",
+		"hello\tworld",
+		"hello\0hidden"
+	};
+	size_t		i;
+
+	printf("\n=== Various strings ===\n");
+
+	i = 0;
+	while (i < sizeof(tests) / sizeof(tests[0]))
+	{
+		test_string(tests[i]);
+		i++;
+	}
+}
+
+int	main(void)
+{
+	printf("====================================\n");
+	printf("         ft_strdup test suite\n");
+	printf("====================================\n");
+
+	printf("\n=== Basic strings ===\n");
+	test_string("Hello");
+	test_string("Hello, world!");
+	test_string("42");
+	test_string("42 School");
+	test_string("libft");
+
+	test_empty_string();
+	test_special_characters();
+	test_many_strings();
+	test_long_string();
+	test_independence();
+
+	printf("\n====================================\n");
+	printf("              Done!\n");
+	printf("====================================\n");
+
+	return (0);
+}*//*void	r(unsigned int i, char *c)
+{
+	if (i > 0)
+		*c = 'r';
+}*/
+
+void	ft_striteri(char *s, void (*f)(unsigned int, char*))
+{
+	unsigned int	i;
+
+	if (!s || !f)
+		return ;
+	i = 0;
+	while (s[i])
+	{
+		f(i, (s + i));
+		i++;
+	}
+}
+
+/*#include <stdio.h>
+int main (void)
+{
+	char str[] = "1hey!";
+	ft_striteri(str, r);
+	printf("%s\n", str);
+	return (0);
+}*/#include "libft.h"
+
+char	*ft_strjoin(char const *s1, char const *s2)
+{
+	char	*ptr;
+
+	if (!s1 || !s2)
+		return (NULL);
+	ptr = malloc(ft_strlen(s1) + ft_strlen(s2) + 1);
+	if (ptr == NULL)
+		return (NULL);
+	ft_memcpy(ptr, s1, ft_strlen(s1));
+	ft_memcpy(ptr + ft_strlen(s1), s2, ft_strlen(s2));
+	ptr[ft_strlen(s1) + ft_strlen(s2)] = '\0';
+	return (ptr);
+}
+
+/*#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "libft.h"
+
+// counters for the final summary
+static int	g_total = 0;
+static int	g_failed = 0;
+
+// printing a NULL pointer with %s is undefined behavior, so we go through this
+static const char	*show(const char *s)
+{
+	if (s == NULL)
+		return ("(NULL)");
+	return (s);
+}
+
+// runs ft_strjoin(s1, s2) and compares the result with `expected`
+// expected == NULL means "ft_strjoin must return NULL"
+static void	check(const char *name, const char *s1, const char *s2,
+				const char *expected)
+{
+	char	*res;
+	char	*copy1;
+	char	*copy2;
+	int		ok;
+
+	g_total++;
+	ok = 1;
+	// keep private copies of the inputs to detect if ft_strjoin modifies them
+	copy1 = (s1 != NULL) ? strdup(s1) : NULL;
+	copy2 = (s2 != NULL) ? strdup(s2) : NULL;
+	res = ft_strjoin(s1, s2);
+	if (expected == NULL)
+	{
+		// a NULL result was required
+		if (res != NULL)
+		{
+			printf("   -> expected NULL but got \"%s\"\n", res);
+			ok = 0;
+		}
+	}
+	else if (res == NULL)
+	{
+		// a string was required but we got NULL
+		printf("   -> expected \"%s\" but got NULL\n", expected);
+		ok = 0;
+	}
+	else
+	{
+		// content check with strcmp
+		if (strcmp(res, expected) != 0)
+		{
+			printf("   -> content: expected \"%s\", got \"%s\"\n",
+				expected, res);
+			ok = 0;
+		}
+		// length check, done separately so the report shows which one failed
+		if (strlen(res) != strlen(expected))
+		{
+			printf("   -> length: expected %zu, got %zu\n",
+				strlen(expected), strlen(res));
+			ok = 0;
+		}
+		// the result must be a new allocation, not one of the inputs
+		if (res == s1 || res == s2)
+		{
+printf("   -> result points to one of the inputs (not a new string)\n");
+			ok = 0;
+		}
+	}
+	// the inputs must be unchanged after the call
+	if ((copy1 != NULL && strcmp(copy1, s1) != 0)
+		|| (copy2 != NULL && strcmp(copy2, s2) != 0))
+	{
+		printf("   -> ft_strjoin modified one of its inputs\n");
+		ok = 0;
+	}
+	printf("[%s] %-28s s1=\"%s\" s2=\"%s\"\n", ok ? " OK " : "FAIL",
+		name, show(s1), show(s2));
+	if (!ok)
+		g_failed++;
+	free(res);
+	free(copy1);
+	free(copy2);
+}
+
+int	main(void)
+{
+	char	*big1;
+	char	*big2;
+	char	*bigexp;
+	size_t	n;
+
+	// normal cases
+	check("normal", "Hello, ", "world!", "Hello, world!");
+	check("single chars", "a", "b", "ab");
+	check("spaces only", "   ", "  ", "     ");
+	check("special characters", "\t\n", "\\\"", "\t\n\\\"");
+	check("different lengths", "a", "bcdefghijklmnop", "abcdefghijklmnop");
+	check("same string twice", "abc", "abc", "abcabc");
+
+	// empty strings (valid input, must NOT return NULL)
+	check("empty s1", "", "abc", "abc");
+	check("empty s2", "abc", "", "abc");
+	check("both empty", "", "", "");
+
+	// NULL inputs (decided policy: any NULL returns NULL)
+	check("NULL s1", NULL, "abc", NULL);
+	check("NULL s2", "abc", NULL, NULL);
+	check("both NULL", NULL, NULL, NULL);
+	check("NULL s1, empty s2", NULL, "", NULL);
+	check("empty s1, NULL s2", "", NULL, NULL);
+
+	// same pointer passed as both arguments
+	{
+		const char	*same = "xyz";
+
+		check("same pointer twice", same, same, "xyzxyz");
+	}
+
+	// long strings, to catch wrong allocation sizes
+	n = 100000;
+	big1 = malloc(n + 1);
+	big2 = malloc(n + 1);
+	bigexp = malloc(2 * n + 1);
+	if (big1 == NULL || big2 == NULL || bigexp == NULL)
+	{
+		printf("test setup: malloc failed, skipping long strings\n");
+		free(big1);
+		free(big2);
+		free(bigexp);
+	}
+	else
+	{
+		memset(big1, 'a', n);
+		big1[n] = '\0';
+		memset(big2, 'b', n);
+		big2[n] = '\0';
+		strcpy(bigexp, big1);
+		strcat(bigexp, big2);
+		check("long strings (100000 each)", big1, big2, bigexp);
+		free(big1);
+		free(big2);
+		free(bigexp);
+	}
+	printf("\n%d/%d tests passed\n", g_total - g_failed, g_total);
+	return (g_failed != 0);
+}*/#include "libft.h"
+
+size_t	ft_strlcat(char *dst, const char *src, size_t size)
+{
+	size_t	i;
+	size_t	j;
+
+	i = 0;
+	j = 0;
+	while (i < size && dst[i] != '\0')
+		i++;
+	if (i == size)
+		return (ft_strlen(src) + size);
+	while ((i + j) < size - 1 && src[j] != '\0')
+	{
+		dst[i + j] = src[j];
+		j++;
+	}
+	dst[i + j] = '\0';
+	while (src[j] != '\0')
+		j++;
+	return (i + j);
+}
+
+/*#include <stdio.h>
+#include <bsd/string.h>
+
+size_t	ft_strlcat(char *dst, const char *src, size_t size);
+
+int	main(void)
+{
+	char	std_dst[50];
+	char	ft_dst[50];
+	size_t	std_ret;
+	size_t	ft_ret;
+
+	// 1. Normal concatenation 
+	strcpy(std_dst, "Hello ");
+	strcpy(ft_dst, "Hello ");
+	std_ret = strlcat(std_dst, "world", 50);
+	ft_ret = ft_strlcat(ft_dst, "world", 50);
+	printf("1. Normal concatenation\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 2. Empty destination 
+	strcpy(std_dst, "");
+	strcpy(ft_dst, "");
+	std_ret = strlcat(std_dst, "hello", 50);
+	ft_ret = ft_strlcat(ft_dst, "hello", 50);
+	printf("2. Empty destination\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 3. Empty source 
+	strcpy(std_dst, "hello");
+	strcpy(ft_dst, "hello");
+	std_ret = strlcat(std_dst, "", 50);
+	ft_ret = ft_strlcat(ft_dst, "", 50);
+	printf("3. Empty source\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 4. Exact fit 
+	strcpy(std_dst, "hello");
+	strcpy(ft_dst, "hello");
+	std_ret = strlcat(std_dst, " world", 12);
+	ft_ret = ft_strlcat(ft_dst, " world", 12);
+	printf("4. Exact fit\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 5. Truncation
+	strcpy(std_dst, "hello");
+	strcpy(ft_dst, "hello");
+	std_ret = strlcat(std_dst, " world", 8);
+	ft_ret = ft_strlcat(ft_dst, " world", 8);
+	printf("5. Truncation\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 6. Heavy truncation 
+	strcpy(std_dst, "hello");
+	strcpy(ft_dst, "hello");
+	std_ret = strlcat(std_dst, " world", 6);
+	ft_ret = ft_strlcat(ft_dst, " world", 6);
+	printf("6. Heavy truncation\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 7. size = 0 
+	strcpy(std_dst, "hello");
+	strcpy(ft_dst, "hello");
+	std_ret = strlcat(std_dst, " world", 0);
+	ft_ret = ft_strlcat(ft_dst, " world", 0);
+	printf("7. Size = 0\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 8. size = 1 
+	strcpy(std_dst, "");
+	strcpy(ft_dst, "");
+	std_ret = strlcat(std_dst, "hello", 1);
+	ft_ret = ft_strlcat(ft_dst, "hello", 1);
+	printf("8. Size = 1\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 9. Destination already full 
+	strcpy(std_dst, "123456789");
+	strcpy(ft_dst, "123456789");
+	std_ret = strlcat(std_dst, "abc", 10);
+	ft_ret = ft_strlcat(ft_dst, "abc", 10);
+	printf("9. Destination already full\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 10. Source is longer than remaining space 
+	strcpy(std_dst, "abc");
+	strcpy(ft_dst, "abc");
+	std_ret = strlcat(std_dst, "123456789", 8);
+	ft_ret = ft_strlcat(ft_dst, "123456789", 8);
+	printf("10. Source longer than remaining space\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 11. Both empty 
+	strcpy(std_dst, "");
+	strcpy(ft_dst, "");
+	std_ret = strlcat(std_dst, "", 10);
+	ft_ret = ft_strlcat(ft_dst, "", 10);
+	printf("11. Both empty\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 12. Destination almost fills buffer 
+	strcpy(std_dst, "12345678");
+	strcpy(ft_dst, "12345678");
+	std_ret = strlcat(std_dst, "XY", 10);
+	ft_ret = ft_strlcat(ft_dst, "XY", 10);
+	printf("12. Destination almost fills buffer\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	return (0);
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_strlcpy.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/26 11:52:27 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/09/27 15:02:30 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+size_t	ft_strlcpy(char *dst, const char *src, size_t size)
+{
+	size_t	i;
+
+	if (size == 0)
+		return (ft_strlen(src));
+	i = 0;
+	while (i < size - 1 && src[i] != '\0')
+	{
+		dst[i] = src[i];
+		i++;
+	}
+	dst[i] = '\0';
+	while (src[i] != '\0')
+		i++;
+	return (i);
+}
+
+/*#include <stdio.h>
+#include <bsd/string.h>
+
+int main(void)
+{
+	char	std_dst[50];
+	char	ft_dst[50];
+	size_t	std_ret;
+	size_t	ft_ret;
+
+	// 1. Normal copy 
+	std_ret = strlcpy(std_dst, "hello", 10);
+	ft_ret = ft_strlcpy(ft_dst, "hello", 10);
+	printf("1. Normal copy\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 2. Exact size 
+	std_ret = strlcpy(std_dst, "hello", 6);
+	ft_ret = ft_strlcpy(ft_dst, "hello", 6);
+	printf("2. Exact size\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 3. Truncation 
+	std_ret = strlcpy(std_dst, "hello", 5);
+	ft_ret = ft_strlcpy(ft_dst, "hello", 5);
+	printf("3. Truncation\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 4. Heavy truncation 
+	std_ret = strlcpy(std_dst, "hello world", 3);
+	ft_ret = ft_strlcpy(ft_dst, "hello world", 3);
+	printf("4. Heavy truncation\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 5. Size = 1 
+	std_ret = strlcpy(std_dst, "hello", 1);
+	ft_ret = ft_strlcpy(ft_dst, "hello", 1);
+	printf("5. Size = 1\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 6. Size = 0 
+	memset(std_dst, 'X', sizeof(std_dst));
+	memset(ft_dst, 'X', sizeof(ft_dst));
+	std_ret = strlcpy(std_dst, "hello", 0);
+	ft_ret = ft_strlcpy(ft_dst, "hello", 0);
+	printf("6. Size = 0\n");
+	printf("   std: first char = '%c' | ret: %zu\n", std_dst[0], std_ret);
+	printf("   ft : first char = '%c' | ret: %zu\n\n", ft_dst[0], ft_ret);
+
+	// 7. Empty source 
+	std_ret = strlcpy(std_dst, "", 10);
+	ft_ret = ft_strlcpy(ft_dst, "", 10);
+	printf("7. Empty source\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 8. Empty source + size 0 
+	memset(std_dst, 'X', sizeof(std_dst));
+	memset(ft_dst, 'X', sizeof(ft_dst));
+	std_ret = strlcpy(std_dst, "", 0);
+	ft_ret = ft_strlcpy(ft_dst, "", 0);
+	printf("8. Empty source + size = 0\n");
+	printf("   std: first char = '%c' | ret: %zu\n", std_dst[0], std_ret);
+	printf("   ft : first char = '%c' | ret: %zu\n\n", ft_dst[0], ft_ret);
+
+	// 9. One character 
+	std_ret = strlcpy(std_dst, "a", 2);
+	ft_ret = ft_strlcpy(ft_dst, "a", 2);
+	printf("9. One character\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 10. One character + size 1 
+	std_ret = strlcpy(std_dst, "a", 1);
+	ft_ret = ft_strlcpy(ft_dst, "a", 1);
+	printf("10. One character + size = 1\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 11. Source exactly fills size - 1 
+	std_ret = strlcpy(std_dst, "123456789", 10);
+	ft_ret = ft_strlcpy(ft_dst, "123456789", 10);
+	printf("11. Exact fit (size - 1)\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	// 12. Long source
+	std_ret = strlcpy(std_dst, "This is a very long string", 5);
+	ft_ret = ft_strlcpy(ft_dst, "This is a very long string", 5);
+	printf("12. Long source\n");
+	printf("   std: \"%s\" | ret: %zu\n", std_dst, std_ret);
+	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
+
+	return (0);
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_strlen.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/23 15:45:49 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/09/27 12:33:45 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i] != '\0')
+	{
+		i++;
+	}
+	return (i);
+}
+
+/*#include <stdio.h>
+int main(int argc, char **argv)
+{
+	if (argc < 2)
+		return (0);
+	int i = 1;
+	while (i < argc)
+	{
+		printf("%s %zu\n", argv[i], ft_strlen(argv[i]));
+		i++;
+	}
+	return (0);
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_strmapi.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/30 23:27:54 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/09/30 23:59:52 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+/*char	num(unsigned int i, char c)
+{
+	char chr = '.';
+	if (c != '.' && i > 9)
+		chr = '0';
+	else if (c != '.' && i <= 9)
+		chr = i + '0';
+	return (chr);
+}*/
+
+char	*ft_strmapi(char const *s, char (*f)(unsigned int, char))
+{
+	unsigned int		i;
+	size_t				len_s;
+	char				*ptr;
+
+	if (!s || !f)
+		return (NULL);
+	len_s = ft_strlen(s);
+	if (len_s == 0)
+		return (ft_strdup(""));
+	ptr = malloc(len_s + 1);
+	if (!ptr)
+		return (NULL);
+	i = 0;
+	while (s[i])
+	{
+		ptr[i] = f(i, s[i]);
+		i++;
+	}
+	ptr[i] = '\0';
+	return (ptr);
+}
+
+/*#include <stdio.h>
+int main (void)
+{
+	char *str = ft_strmapi("hey.so.yeah", num);
+	printf("%s\n", str);
+	free(str);
+	return (0);
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_strncmp.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/26 15:28:15 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/10/03 00:21:31 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+int	ft_strncmp(const char *s1, const char *s2, size_t n)
+{
+	size_t			i;
+	unsigned char	*str1;
+	unsigned char	*str2;
+
+	str1 = (unsigned char *) s1;
+	str2 = (unsigned char *) s2;
+	i = 0;
+	while (i < n && str1[i] == str2[i] && str1[i] && str2[i])
+		i++;
+	if (i == n)
+		return (0);
+	return (str1[i] - str2[i]);
+}
+
+/*#include <stdio.h>
+#include <string.h>
+
+int	ft_strncmp(const char *s1, const char *s2, size_t n);
+
+int	main(void)
+{
+	int	std_ret;
+	int	ft_ret;
+
+	// 1. Identical strings 
+	std_ret = strncmp("hello", "hello", 5);
+	ft_ret = ft_strncmp("hello", "hello", 5);
+	printf("1. Identical strings\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 2. First string is smaller 
+	std_ret = strncmp("hello", "world", 5);
+	ft_ret = ft_strncmp("hello", "world", 5);
+	printf("2. First string is smaller\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 3. First string is greater 
+	std_ret = strncmp("world", "hello", 5);
+	ft_ret = ft_strncmp("world", "hello", 5);
+	printf("3. First string is greater\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 4. Difference after first character 
+	std_ret = strncmp("abc", "axc", 3);
+	ft_ret = ft_strncmp("abc", "axc", 3);
+	printf("4. Difference after first character\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 5. n = 0 
+	std_ret = strncmp("hello", "world", 0);
+	ft_ret = ft_strncmp("hello", "world", 0);
+	printf("5. n = 0\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 6. n = 1, same first character
+	std_ret = strncmp("hello", "hey", 1);
+	ft_ret = ft_strncmp("hello", "hey", 1);
+	printf("6. n = 1, same first character\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 7. n = 1, different first character 
+	std_ret = strncmp("hello", "world", 1);
+	ft_ret = ft_strncmp("hello", "world", 1);
+	printf("7. n = 1, different first character\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 8. Difference exactly at n 
+	std_ret = strncmp("abcde", "abcxy", 3);
+	ft_ret = ft_strncmp("abcde", "abcxy", 3);
+	printf("8. Difference after n characters\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 9. Difference within n 
+	std_ret = strncmp("abcde", "abxyz", 4);
+	ft_ret = ft_strncmp("abcde", "abxyz", 4);
+	printf("9. Difference within n\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 10. One string is a prefix of the other 
+	std_ret = strncmp("abc", "abcdef", 6);
+	ft_ret = ft_strncmp("abc", "abcdef", 6);
+	printf("10. First string is a prefix\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 11. Reverse prefix comparison 
+	std_ret = strncmp("abcdef", "abc", 6);
+	ft_ret = ft_strncmp("abcdef", "abc", 6);
+	printf("11. Second string is a prefix\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 12. Both empty 
+	std_ret = strncmp("", "", 5);
+	ft_ret = ft_strncmp("", "", 5);
+	printf("12. Both empty\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 13. Empty vs non-empty 
+	std_ret = strncmp("", "hello", 5);
+	ft_ret = ft_strncmp("", "hello", 5);
+	printf("13. Empty vs non-empty\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 14. Non-empty vs empty 
+	std_ret = strncmp("hello", "", 5);
+	ft_ret = ft_strncmp("hello", "", 5);
+	printf("14. Non-empty vs empty\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 15. n smaller than actual difference 
+	std_ret = strncmp("abcdef", "abcxyz", 2);
+	ft_ret = ft_strncmp("abcdef", "abcxyz", 2);
+	printf("15. Difference outside comparison range\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	return (0);
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_strncmp.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/26 15:28:15 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/10/03 00:21:31 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+int	ft_strncmp(const char *s1, const char *s2, size_t n)
+{
+	size_t			i;
+	unsigned char	*str1;
+	unsigned char	*str2;
+
+	str1 = (unsigned char *) s1;
+	str2 = (unsigned char *) s2;
+	i = 0;
+	while (i < n && str1[i] == str2[i] && str1[i] && str2[i])
+		i++;
+	if (i == n)
+		return (0);
+	return (str1[i] - str2[i]);
+}
+
+/*#include <stdio.h>
+#include <string.h>
+
+int	ft_strncmp(const char *s1, const char *s2, size_t n);
+
+int	main(void)
+{
+	int	std_ret;
+	int	ft_ret;
+
+	// 1. Identical strings 
+	std_ret = strncmp("hello", "hello", 5);
+	ft_ret = ft_strncmp("hello", "hello", 5);
+	printf("1. Identical strings\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 2. First string is smaller 
+	std_ret = strncmp("hello", "world", 5);
+	ft_ret = ft_strncmp("hello", "world", 5);
+	printf("2. First string is smaller\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 3. First string is greater 
+	std_ret = strncmp("world", "hello", 5);
+	ft_ret = ft_strncmp("world", "hello", 5);
+	printf("3. First string is greater\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 4. Difference after first character 
+	std_ret = strncmp("abc", "axc", 3);
+	ft_ret = ft_strncmp("abc", "axc", 3);
+	printf("4. Difference after first character\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 5. n = 0 
+	std_ret = strncmp("hello", "world", 0);
+	ft_ret = ft_strncmp("hello", "world", 0);
+	printf("5. n = 0\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 6. n = 1, same first character
+	std_ret = strncmp("hello", "hey", 1);
+	ft_ret = ft_strncmp("hello", "hey", 1);
+	printf("6. n = 1, same first character\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 7. n = 1, different first character 
+	std_ret = strncmp("hello", "world", 1);
+	ft_ret = ft_strncmp("hello", "world", 1);
+	printf("7. n = 1, different first character\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 8. Difference exactly at n 
+	std_ret = strncmp("abcde", "abcxy", 3);
+	ft_ret = ft_strncmp("abcde", "abcxy", 3);
+	printf("8. Difference after n characters\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 9. Difference within n 
+	std_ret = strncmp("abcde", "abxyz", 4);
+	ft_ret = ft_strncmp("abcde", "abxyz", 4);
+	printf("9. Difference within n\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 10. One string is a prefix of the other 
+	std_ret = strncmp("abc", "abcdef", 6);
+	ft_ret = ft_strncmp("abc", "abcdef", 6);
+	printf("10. First string is a prefix\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 11. Reverse prefix comparison 
+	std_ret = strncmp("abcdef", "abc", 6);
+	ft_ret = ft_strncmp("abcdef", "abc", 6);
+	printf("11. Second string is a prefix\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 12. Both empty 
+	std_ret = strncmp("", "", 5);
+	ft_ret = ft_strncmp("", "", 5);
+	printf("12. Both empty\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 13. Empty vs non-empty 
+	std_ret = strncmp("", "hello", 5);
+	ft_ret = ft_strncmp("", "hello", 5);
+	printf("13. Empty vs non-empty\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 14. Non-empty vs empty 
+	std_ret = strncmp("hello", "", 5);
+	ft_ret = ft_strncmp("hello", "", 5);
+	printf("14. Non-empty vs empty\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	// 15. n smaller than actual difference 
+	std_ret = strncmp("abcdef", "abcxyz", 2);
+	ft_ret = ft_strncmp("abcdef", "abcxyz", 2);
+	printf("15. Difference outside comparison range\n");
+	printf("   std: %d\n", std_ret);
+	printf("   ft : %d\n\n", ft_ret);
+
+	return (0);
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_strnstr.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/26 16:48:58 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/09/28 09:22:59 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+char	*ft_strnstr(const char *big, const char *little, size_t len)
+{
+	size_t	i;
+	size_t	j;
+	size_t	little_len;
+
+	little_len = ft_strlen(little);
+	if (little_len == 0)
+		return ((char *)big);
+	i = 0;
+	while (i < len && big[i])
+	{
+		j = 0;
+		while ((i + j) < len && big[i + j] == little[j] && big[i + j])
+			j++;
+		if (j == little_len)
+			return (((char *) big) + i);
+		i++;
+	}
+	return (NULL);
+}
+
+/*#include <stdio.h>
+#include <bsd/string.h>
+#include <stdlib.h>
+
+char	*ft_strnstr(const char *big, const char *little, size_t len);
+
+static int	g_tests = 0;
+static int	g_failed = 0;
+
+static void	test_case(const char *name, const char *big,
+			const char *little, size_t len)
+{
+	char	*expected;
+	char	*actual;
+
+	g_tests++;
+
+	expected = strnstr(big, little, len);
+	actual = ft_strnstr(big, little, len);
+
+	if (expected == actual)
+	{
+		printf("[OK]   %-45s -> same pointer\n", name);
+		return;
+	}
+
+	if (expected && actual && strcmp(expected, actual) == 0)
+	{
+		printf("[OK]   %-45s -> \"%s\"\n", name, actual);
+		return;
+	}
+
+	g_failed++;
+	printf("[FAIL] %-45s\n", name);
+	printf("       big    = \"%s\"\n", big);
+	printf("       little = \"%s\"\n", little);
+	printf("       len    = %zu\n", len);
+	printf("       std    = %s\n", expected ? expected : "NULL");
+	printf("       ft     = %s\n", actual ? actual : "NULL");
+}
+
+static void	test_case_binary(const char *name, const char *big,
+			const char *little, size_t len)
+{
+	char	*expected;
+	char	*actual;
+
+	g_tests++;
+
+	expected = strnstr(big, little, len);
+	actual = ft_strnstr(big, little, len);
+
+	if (expected == actual)
+	{
+		printf("[OK]   %-45s -> same pointer\n", name);
+		return;
+	}
+
+	if (expected && actual && strcmp(expected, actual) == 0)
+	{
+		printf("[OK]   %-45s -> same contents\n", name);
+		return;
+	}
+
+	g_failed++;
+	printf("[FAIL] %-45s\n", name);
+	printf("       len    = %zu\n", len);
+	printf("       std    = %s\n", expected ? expected : "NULL");
+	printf("       ft     = %s\n", actual ? actual : "NULL");
+}
+
+int	main(void)
+{
+	char	big_with_null[] = "hello\0world";
+	char	little_with_null[] = "world";
+//	char	little_empty[] = "";
+//	char	big_empty[] = "";
+	char	buffer[1000];
+
+	memset(buffer, 'a', sizeof(buffer) - 1);
+	buffer[sizeof(buffer) - 1] = '\0';
+
+	printf("===============================================\n");
+	printf("             ft_strnstr TEST SUITE\n");
+	printf("===============================================\n\n");
+
+	// Basic tests
+	test_case("basic match at beginning",
+		"hello world", "hello", 11);
+
+	test_case("basic match in middle",
+		"hello world", "world", 11);
+
+	test_case("basic match at end",
+		"hello world", "world", 5);
+
+	test_case("basic match one character",
+		"hello world", "w", 11);
+
+	test_case("no match",
+		"hello world", "xyz", 11);
+
+	test_case("little longer than big",
+		"abc", "abcdef", 10);
+
+	test_case("little same length as big",
+		"abc", "abc", 3);
+
+	test_case("little one shorter than big",
+		"abcd", "abc", 4);
+
+	// Empty strings
+	test_case("empty little",
+		"hello world", "", 11);
+
+	test_case("empty big and empty little",
+		"", "", 0);
+
+	test_case("empty big",
+		"", "a", 10);
+
+	test_case("empty little with len zero",
+		"hello", "", 0);
+
+	// len == 0
+	test_case("len zero",
+		"hello", "h", 0);
+
+	test_case("len zero with match at beginning",
+		"hello", "hello", 0);
+
+	test_case("len zero with empty little",
+		"hello", "", 0);
+
+	test_case("len zero with empty strings",
+		"", "", 0);
+
+	// Exact length boundaries
+	test_case("match uses exactly len characters",
+		"abcdef", "abc", 3);
+
+	test_case("match starts at len boundary",
+		"abcdef", "d", 4);
+
+	test_case("match would extend past len",
+		"abcdef", "def", 5);
+
+	test_case("match exactly reaches len",
+		"abcdef", "def", 6);
+
+	test_case("one character too short",
+		"abcdef", "def", 5);
+
+	test_case("little length equals len",
+		"abcdef", "abc", 3);
+
+	test_case("little length greater than len",
+		"abcdef", "abcd", 3);
+
+	// Different positions
+	test_case("match at index 0",
+		"abcxxx", "abc", 6);
+
+	test_case("match at index 1",
+		"xabcxx", "abc", 6);
+
+	test_case("match at index 2",
+		"xxabcx", "abc", 6);
+
+	test_case("match at final possible index",
+		"xxxabc", "abc", 6);
+
+	test_case("match just outside search range",
+		"xxxabc", "abc", 5);
+
+	// Repeated patterns
+	test_case("repeated pattern first occurrence",
+		"abcabcabc", "abc", 9);
+
+	test_case("repeated pattern limited before first",
+		"abcabcabc", "abc", 2);
+
+	test_case("repeated pattern limited to first",
+		"abcabcabc", "abc", 3);
+
+	test_case("repeated pattern reaches second",
+		"abcabcabc", "abc", 6);
+
+	test_case("repeated single character",
+		"aaaaaaaaaa", "a", 10);
+
+	test_case("repeated single character near end",
+		"aaaaaaaaaa", "aa", 10);
+
+	test_case("repeated pattern no complete match",
+		"aaaaab", "aaaab", 5);
+
+	// Overlapping matches
+	test_case("overlapping pattern",
+		"aaaaa", "aaa", 5);
+
+	test_case("overlap starts at second char",
+		"baaaa", "aaa", 5);
+
+	test_case("overlap with limited len",
+		"aaaaa", "aaa", 4);
+
+	test_case("overlap just too short",
+		"aaaaa", "aaaa", 3);
+
+	// Special characters
+	test_case("spaces",
+		"hello world", " ", 11);
+
+	test_case("multiple spaces",
+		"hello   world", "   ", 13);
+
+	test_case("punctuation",
+		"hello, world!", ",", 13);
+
+	test_case("punctuation sequence",
+		"hello, world!", ", ", 13);
+
+	test_case("numbers",
+		"abc123456xyz", "123456", 12);
+
+	test_case("symbols",
+		"abc!@#$%^&*()xyz", "@#$", 16);
+
+	test_case("newline",
+		"hello\nworld", "\n", 11);
+
+	test_case("tab",
+		"hello\tworld", "\t", 11);
+
+	test_case("mixed characters",
+		"  abc123!@#XYZ  ", "123!@", 16);
+
+	// Case sensitivity
+	test_case("case sensitive mismatch",
+		"Hello World", "hello", 11);
+
+	test_case("case sensitive match",
+		"Hello World", "World", 11);
+
+	test_case("uppercase vs lowercase",
+		"ABCDEF", "abc", 6);
+
+	// Prefix/suffix relationships
+	test_case("little is prefix",
+		"abcdef", "abc", 6);
+
+	test_case("little is suffix",
+		"abcdef", "def", 6);
+
+	test_case("little contains big",
+		"abc", "abcdef", 6);
+
+	test_case("big and little identical",
+		"same", "same", 4);
+
+	test_case("one char big and little",
+		"a", "a", 1);
+
+	test_case("one char mismatch",
+		"a", "b", 1);
+
+	// len smaller than big length
+	test_case("len cuts off before match",
+		"hello world", "world", 5);
+
+	test_case("len cuts off inside match",
+		"hello world", "world", 9);
+
+	test_case("len includes start of match",
+		"hello world", "world", 7);
+
+	test_case("len includes full match",
+		"hello world", "world", 11);
+
+	test_case("len much larger than big",
+		"hello", "ell", 100);
+
+	test_case("SIZE_MAX-like huge len",
+		"hello", "ell", (size_t)-1);
+
+	// Embedded null byte
+	test_case_binary("embedded null: search visible part",
+		big_with_null, "hello", sizeof(big_with_null));
+
+	test_case_binary("embedded null: search after null",
+		big_with_null, little_with_null, sizeof(big_with_null));
+
+	test_case_binary("embedded null: search null",
+		big_with_null, "\0", sizeof(big_with_null));
+
+	test_case_binary("embedded null: empty little",
+		big_with_null, "", sizeof(big_with_null));
+
+	test_case_binary("embedded null: len before null",
+		big_with_null, "hello", 5);
+
+	test_case_binary("embedded null: len includes null",
+		big_with_null, "hello", 6);
+
+	// Search strings containing null
+	test_case_binary("little starts with null",
+		"abc", "\0", 3);
+
+	test_case_binary("little is null character",
+		"abc", "\0x", 3);
+
+	// Long strings
+	test_case("long string: beginning",
+		buffer, "aaa", sizeof(buffer));
+
+	test_case("long string: near beginning",
+		buffer, "aaaaaa", 10);
+
+	test_case("long string: limited",
+		buffer, "aaaaaa", 5);
+
+	test_case("long string: impossible pattern",
+		buffer, "bbbb", sizeof(buffer));
+
+	test_case("long string: entire buffer",
+		buffer, buffer, sizeof(buffer));
+
+	// Patterns that almost match
+	test_case("almost match at beginning",
+		"abcdef", "abce", 6);
+
+	test_case("almost match in middle",
+		"xxabcdefyy", "abcxef", 10);
+
+	test_case("almost match at end",
+		"xxabcdef", "abcdeg", 8);
+
+	test_case("first chars match only",
+		"abcdef", "abz", 6);
+
+	test_case("last chars match only",
+		"abcdef", "zef", 6);
+
+	// Multiple candidate matches where only later one is valid
+	test_case("first candidate fails, second succeeds",
+		"abxabc", "abc", 6);
+
+	test_case("multiple failed candidates",
+		"abxabyabzabc", "abc", 12);
+
+	test_case("candidate starts before len but ends after",
+		"xxabcdef", "abcdef", 7);
+
+	test_case("candidate starts before len and fits",
+		"xxabcdef", "abcdef", 8);
+
+	// Very small lengths
+	test_case("len one matching first char",
+		"abc", "a", 1);
+
+	test_case("len one not matching",
+		"abc", "b", 1);
+
+	test_case("len two matching second char",
+		"abc", "b", 2);
+
+	test_case("len two not enough for two-char pattern",
+		"abc", "bc", 2);
+
+	test_case("len three matching two-char pattern",
+		"abc", "bc", 3);
+
+	// Different lengths around the exact boundary
+	test_case("pattern exactly fits remaining buffer",
+		"0123456789", "789", 10);
+
+	test_case("pattern does not fit remaining buffer",
+		"0123456789", "789", 9);
+
+	test_case("pattern begins at final index but too long",
+		"0123456789", "9", 10);
+
+	// Lots of identical characters
+	test_case("many a's pattern aaaa",
+		"aaaaaaaaaaaaaaaa", "aaaa", 16);
+
+	test_case("many a's pattern aaaab",
+		"aaaaaaaaaaaaaaaa", "aaaab", 16);
+
+	test_case("many a's pattern baaaa",
+		"aaaaaaaaaaaaaaaa", "baaaa", 16);
+
+	// Strings containing digits and repeated sections
+	test_case("repeated numeric pattern",
+		"123123123123", "123", 12);
+
+	test_case("numeric pattern boundary",
+		"123123123123", "312", 12);
+
+	test_case("numeric pattern too short",
+		"123123123123", "312", 8);
+
+	// Whitespace edge cases
+	test_case("only spaces",
+		"     ", " ", 5);
+
+	test_case("only tabs",
+		"\t\t\t\t", "\t\t", 4);
+
+	test_case("spaces not matching tabs",
+		"    ", "\t", 4);
+
+	// Single-character special cases
+	test_case("single space",
+		" ", " ", 1);
+
+	test_case("single newline",
+		"\n", "\n", 1);
+
+	test_case("single tab",
+		"\t", "\t", 1);
+
+	test_case("single punctuation",
+		"!", "!", 1);
+
+	test_case("single digit",
+		"7", "7", 1);
+
+	// Large len should not change normal result
+	test_case("large len with beginning match",
+		"abcdef", "abc", (size_t)-1);
+
+	test_case("large len with middle match",
+		"abcdef", "cd", (size_t)-1);
+
+	test_case("large len with no match",
+		"abcdef", "xyz", (size_t)-1);
+
+	printf("\n===============================================\n");
+	printf("Tests:  %d\n", g_tests);
+	printf("Failed: %d\n", g_failed);
+	printf("Passed: %d\n", g_tests - g_failed);
+	printf("===============================================\n");
+
+	return (g_failed != 0);
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_strrchr.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/26 14:31:48 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/10/03 00:09:50 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+char	*ft_strrchr(const char *s, int c)
+{
+	size_t	i;
+
+	i = ft_strlen(s) + 1;
+	while (i > 0)
+	{
+		i--;
+		if (s[i] == (char) c)
+			return ((char *)s + i);
+	}
+	return (NULL);
+}
+
+/*#include <stdio.h>
+#include <string.h>
+
+int main()
+{
+    // initializing string
+    char *str = "tripouille";
+
+    // character to be searched
+    char chr = 't';
+
+    // Storing pointer returned by
+    char* ptr =ft_strrchr(str, chr + 256);
+
+    // getting the position of the character
+    if (ptr) {
+        printf("Last occurrence of %c in %s is at index %ld",
+               chr, str, ptr - str);
+    }
+    // condition for character not present
+    else {
+        printf("%c is not present in %s ", chr, str);
+    }
+    return 0;
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_strtrim.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/30 18:39:50 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/09/30 19:50:35 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+static int	in_set(char const c, char const *set)
+{
+	size_t	i;
+
+	i = 0;
+	while (set[i])
+	{
+		if (c == set[i])
+			return (1);
+		i++;
+	}
+	return (0);
+}
+
+char	*ft_strtrim(char const *s1, char const *set)
+{
+	size_t	i;
+	long	j;
+	char	*ptr;
+
+	if (!s1 || !set)
+		return (NULL);
+	j = ft_strlen(s1) - 1;
+	i = 0;
+	while (in_set(s1[i], set) && s1[i])
+		i++;
+	if (i == ft_strlen(s1))
+		return (ft_strdup(""));
+	while (in_set(s1[j], set) && j >= 0)
+		j--;
+	ptr = malloc (j - i + 2);
+	if (ptr == NULL)
+		return (NULL);
+	ptr = (char *)ft_memcpy(ptr, s1 + i, j - i + 1);
+	ptr[j - i + 1] = '\0';
+	return (ptr);
+}
+/*
+// ---- paste from here at the bottom of ft_strtrim.c ----
+// also add these three includes at the top of the file if they are missing:
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <string.h>
+// remove or comment out this whole test section before submitting
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+static int	g_total = 0;
+static int	g_failed = 0;
+
+// NULL-safe printing helper (printing NULL with %s is undefined behavior)
+static const char	*show(const char *s)
+{
+	if (s == NULL)
+		return ("(NULL)");
+	return (s);
+}
+
+// private duplicate of a string, so the test does not depend on ft_strdup
+static char	*t_dup(const char *s)
+{
+	char	*d;
+	size_t	len;
+
+	if (s == NULL)
+		return (NULL);
+	len = strlen(s);
+	d = malloc(len + 1);
+	if (d != NULL)
+		memcpy(d, s, len + 1);
+	return (d);
+}
+
+// runs ft_strtrim(s1, set) and compares the result with `expected`
+// expected == NULL means "ft_strtrim must return NULL"
+static void	check(const char *name, const char *s1, const char *set,
+				const char *expected)
+{
+	char	*res;
+	char	*copy1;
+	char	*copy2;
+	int		ok;
+
+	g_total++;
+	ok = 1;
+	// private copies of the inputs, to detect any modification by ft_strtrim
+	copy1 = t_dup(s1);
+	copy2 = t_dup(set);
+	res = ft_strtrim(s1, set);
+	if (expected == NULL)
+	{
+		if (res != NULL)
+		{
+			printf("   -> expected NULL but got \"%s\"\n", res);
+			ok = 0;
+		}
+	}
+	else if (res == NULL)
+	{
+		printf("   -> expected \"%s\" but got NULL\n", expected);
+		ok = 0;
+	}
+	else
+	{
+		// content check
+		if (strcmp(res, expected) != 0)
+		{
+			printf("   -> content: expected \"%s\", got \"%s\"\n",
+				expected, res);
+			ok = 0;
+		}
+		// length check, reported separately
+		if (strlen(res) != strlen(expected))
+		{
+			printf("   -> length: expected %zu, got %zu\n",
+				strlen(expected), strlen(res));
+			ok = 0;
+		}
+		// the result must always be a new allocation, even if nothing was
+		// trimmed, otherwise a later free() by the caller would be wrong
+		if (res == s1 || res == set)
+		{
+printf("   -> result points to one of the inputs (not a new string)\n");
+			ok = 0;
+		}
+	}
+	// the inputs must be unchanged after the call
+	if ((copy1 != NULL && strcmp(copy1, s1) != 0)
+		|| (copy2 != NULL && strcmp(copy2, set) != 0))
+	{
+		printf("   -> ft_strtrim modified one of its inputs\n");
+		ok = 0;
+	}
+	printf("[%s] %-30s s1=\"%s\" set=\"%s\"\n", ok ? " OK " : "FAIL",
+		name, show(s1), show(set));
+	if (!ok)
+		g_failed++;
+	free(res);
+	free(copy1);
+	free(copy2);
+}
+
+int	main(void)
+{
+	char	*big1;
+	char	*bigexp;
+	size_t	n;
+
+	// normal cases
+	check("both ends", "  hello  ", " ", "hello");
+	check("start only", "   hello", " ", "hello");
+	check("end only", "hello   ", " ", "hello");
+	check("nothing to trim", "hello", " ", "hello");
+	check("several set chars", "xyzhixyz", "xyz", "hi");
+	check("set order differs", "zyxhizyx", "xyz", "hi");
+	check("repeated set chars", "aaabaaa", "aa", "b");
+	check("classic libft example", "abcHELLOcba", "abc", "HELLO");
+	check("whitespace set", " \t\n hi \n\t ", " \t\n", "hi");
+
+	// set characters inside the string must be kept
+	check("set chars in the middle", "  a b  c  ", " ", "a b  c");
+	check("only middle occurrence", "hello world", " ", "hello world");
+	check("trim stops at first non-set", "aabaa", "a", "b");
+	check("different chars each side", "abhelloba", "ab", "hello");
+
+	// everything is trimmed (valid input, result is an empty string, not NULL)
+	check("whole string in set", "aaaa", "a", "");
+	check("whole string, mixed set", "abababab", "ab", "");
+	check("single char in set", "a", "a", "");
+	check("only spaces", "     ", " ", "");
+
+	// single character edge cases
+	check("single char not in set", "a", "b", "a");
+	check("single char, other in set", "b", "ab", "");
+	check("one char left in middle", "aba", "a", "b");
+
+	// case sensitivity
+	check("case sensitive", "AbA", "a", "AbA");
+	check("case sensitive, upper set", "aBa", "a", "B");
+
+	// set chars that do not appear in s1
+	check("set absent from string", "hello", "xyz", "hello");
+	check("set longer than string", "hi", "abcdefghijk", "");
+	check("set longer, no match", "hi", "abcdefgxyz", "hi");
+
+	// empty strings
+	check("empty s1", "", "abc", "");
+	check("empty set", "  hello  ", "", "  hello  ");
+	check("both empty", "", "", "");
+
+	// characters outside the ASCII range (catches signed char problems)
+	check("high byte trimmed", "\xff" "a" "\xff", "\xff", "a");
+	check("high byte kept", "\xff" "a" "\xff", "a", "\xff" "a" "\xff");
+
+	// set contains special characters
+	check("newline and tab", "\n\thi\t\n", "\n\t", "hi");
+	check("backslash and quote", "\\\"ok\"\\", "\\\"", "ok");
+
+	// NULL inputs (policy: any NULL returns NULL, same as ft_strjoin)
+	check("NULL s1", NULL, " ", NULL);
+	check("NULL set", "hello", NULL, NULL);
+	check("both NULL", NULL, NULL, NULL);
+	check("NULL s1, empty set", NULL, "", NULL);
+	check("empty s1, NULL set", "", NULL, NULL);
+
+	// same pointer for both arguments: everything in s1 is in set
+	{
+		const char	*same = "abc";
+
+		check("same pointer twice", same, same, "");
+	}
+
+	// long strings, to catch wrong allocation sizes and slow loops
+	n = 50000;
+	big1 = malloc(2 * n + 4);
+	bigexp = malloc(4);
+	if (big1 == NULL || bigexp == NULL)
+	{
+		printf("test setup: malloc failed, skipping long strings\n");
+		free(big1);
+		free(bigexp);
+	}
+	else
+	{
+		memset(big1, 'x', n);
+		memcpy(big1 + n, "mid", 3);
+		memset(big1 + n + 3, 'x', n);
+		big1[2 * n + 3] = '\0';
+		strcpy(bigexp, "mid");
+		check("long, trimmed both ends", big1, "x", bigexp);
+		check("long, nothing to trim", big1, "y", big1);
+		memset(big1, 'x', 2 * n);
+		big1[2 * n] = '\0';
+		check("long, all trimmed", big1, "x", "");
+		free(big1);
+		free(bigexp);
+	}
+	printf("\n%d/%d tests passed\n", g_total - g_failed, g_total);
+	return (g_failed != 0);
+}*//* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_substr.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ralkhrai <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/30 15:45:32 by ralkhrai          #+#    #+#             */
+/*   Updated: 2026/09/30 15:45:40 by ralkhrai         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "libft.h"
+
+char	*ft_substr(char const *s, unsigned int start, size_t len)
+{
+	size_t			s_len;
+	size_t			i;
+	char			*ptr;
+
+	if (!s)
+		return (NULL);
+	s_len = ft_strlen(s);
+	if (start >= s_len)
+		return (ft_strdup(""));
+	if (len > s_len - start)
+		len = s_len - start;
+	ptr = (char *)malloc(sizeof(char) * (len + 1));
+	if (ptr == NULL)
+		return (NULL);
+	i = 0;
+	while (i < len)
+	{
+		ptr[i] = s[start + i];
+		i++;
+	}
+	ptr[i] = '\0';
+	return (ptr);
+}
+
+/*#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+void test(const char *s, unsigned int start, size_t len, const char *expected)
+{
+    char *result;
+
+    result = ft_substr(s, start, len);
+
+    if (!result)
+    {
+        printf("❌ NULL returned\n");
+        printf("Input    : \"%s\"\n", s);
+        printf("start=%u len=%zu\n\n", start, len);
+        return;
+    }
+
+    if (strcmp(result, expected) == 0)
+        printf("✅ PASS ");
+    else
+        printf("❌ FAIL ");
+
+    printf("s=\"%s\" start=%u len=%zu\n", s, start, len);
+    printf("Expected: \"%s\"\n", expected);
+    printf("Got     : \"%s\"\n\n", result);
+
+    free(result);
+}
+
+int main(void)
+{
+    printf("===== EMPTY STRING =====\n");
+    test("", 0, 0, "");
+    test("", 0, 5, "");
+    test("", 5, 5, "");
+
+    printf("===== SINGLE CHAR =====\n");
+    test("a", 0, 0, "");
+    test("a", 0, 1, "a");
+    test("a", 0, 5, "a");
+    test("a", 1, 1, "");
+    test("a", 2, 10, "");
+
+    printf("===== NORMAL CASES =====\n");
+    test("hello", 0, 5, "hello");
+    test("hello", 0, 3, "hel");
+    test("hello", 1, 3, "ell");
+    test("hello", 4, 1, "o");
+
+    printf("===== LEN TOO BIG =====\n");
+    test("hello", 0, 100, "hello");
+    test("hello", 2, 100, "llo");
+    test("hello", 4, 100, "o");
+
+    printf("===== START AT END =====\n");
+    test("hello", 5, 1, "");
+    test("hello", 5, 100, "");
+
+    printf("===== START PAST END =====\n");
+    test("hello", 6, 1, "");
+    test("hello", 50, 100, "");
+
+    printf("===== LEN ZERO =====\n");
+    test("abcdef", 0, 0, "");
+    test("abcdef", 3, 0, "");
+    test("abcdef", 6, 0, "");
+
+    printf("===== RANDOM =====\n");
+    test("abcdef", 2, 3, "cde");
+    test("abcdef", 2, 4, "cdef");
+    test("abcdef", 3, 2, "de");
+    test("42 Amman", 3, 5, "Amman");
+    test("rand is cool", 5, 2, "is");
+    test("rand is cool", 8, 4, "cool");
+
+    return (0);
+}*/
