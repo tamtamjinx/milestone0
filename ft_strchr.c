@@ -39,7 +39,8 @@ The function signature dictates that ft_strchr must return a regular char * (a p
 C does not allow you to implicitly drop a const protection because it is unsafe. 
 If you try to return &s[i] directly, the compiler will throw a warning/error saying: "You are trying to return a const pointer as a non-const pointer!"
 The Fix:
-By adding (char *) in front of it, you are performing a forceful typecast. You are telling the compiler: "I know this string was originally passed in as read-only*/ (const), but I need to return it as a modifiable pointer (char *) to match the standard function definition. Trust me, strip the const tag away."
+By adding (char *) in front of it, you are performing a forceful typecast. You are telling the compiler: "I know this string was originally passed in as read-only
+(const), but I need to return it as a modifiable pointer (char *) to match the standard function definition. Trust me, strip the const tag away."*/
 /*#include "libft.h"
 
 char	*ft_strchr(const char *s, int c)
