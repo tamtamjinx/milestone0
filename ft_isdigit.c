@@ -29,4 +29,10 @@ int	ft_isdigit(int c)
 	zero = '0';
 	nine = '9';
 	return (c >= zero && c <= nine);
+/*#include <stdio.h>
+int main(void)
+{
+	for (int i = -256; i < 256; i++)
+		printf("%d: %d\n", i, ft_isdigit(i));
+	return (0);
 }*/
