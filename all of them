@@ -22,59 +22,7 @@ void	*ft_calloc(size_t nmemb, size_t size)
 	ft_bzero(ptr, size * nmemb);
 	return (ptr);
 }
-
 #include "libft.h"
-
-int	ft_isalnum(int c)
-{
-	return (ft_isalpha(c) || ft_isdigit(c));
-}
-
-int	ft_isalpha(int c)
-{
-	unsigned char	ch_a;
-	unsigned char	ch_z;
-	unsigned char	ch_ac;
-	unsigned char	ch_zc;
-
-	ch_a = 'a';
-	ch_z = 'z';
-	ch_ac = 'A';
-	ch_zc = 'Z';
-	return ((c >= ch_a && c <= ch_z) || (c >= ch_ac && c <= ch_zc));
-}
-/*#include <stdio.h>
-int main(void)
-{
-	for (int i = 0; i < 256; i++)
-		printf("%d: %d\n", i, ft_isalpha(i));
-	return (0);
-}*/
-int	ft_isascii(int c)
-{
-	return (c >= 0 && c <= 127);
-}
-
-int	ft_isdigit(int c)
-{
-	unsigned char	zero;
-	unsigned char	nine;
-
-	zero = '0';
-	nine = '9';
-	return (c >= zero && c <= nine);
-}
-/*#include <stdio.h>
-int main(void)
-{
-	for (int i = -256; i < 256; i++)
-		printf("%d: %d\n", i, ft_isdigit(i));
-	return (0);
-}*/
-int	ft_isprint(int c)
-{
-	return (c >= 32 && c <= 126);
-}#include "libft.h"
 
 static long	absu(long n)
 {
@@ -1061,33 +1009,9 @@ int main(int argc, char **argv)
 	else printf("NULL!!!");
 	if (strs) ft_clear(&strs, count_words(argv[1], ' ')+1);
 	return (0);
-}*/#include "libft.h"
+}*/
 
-char	*ft_strchr(const char *s, int c)
-{
-	size_t	i;
 
-	i = 0;
-	while (s[i] != '\0' && s[i] != (char) c)
-		i++;
-	if ((char) c != s[i])
-		return (NULL);
-	return ((char *) s + i);
-}
-
-/*#include <stdio.h>
-#include <string.h>
-
-int main() {
-    char str[] = "GeeksforGeeks";
-	char *us;
-	char *ptr = ft_strchr(us, '\0');
-    if (ptr != NULL)
-        printf("Character found at position: %ld\n", ptr - str);
-    else
-        printf("Character not found\n");
-
-    return 0;
 }*//* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
