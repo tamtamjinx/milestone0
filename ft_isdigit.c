@@ -9,9 +9,7 @@
 /*   Updated: 2026/09/22 17:45:02 by tlafi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
-#include <unistd.h>
-
+//again check the header
 int	ft_isdigit(int c)
 {
 	if (c >= '0' && c <= '9')
@@ -23,3 +21,12 @@ int	ft_isdigit(int c)
 		return (0);
 	}
 }
+/*int	ft_isdigit(int c)
+{
+	unsigned char	zero;
+	unsigned char	nine;
+
+	zero = '0';
+	nine = '9';
+	return (c >= zero && c <= nine);
+}*/
