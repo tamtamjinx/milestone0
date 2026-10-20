@@ -9,7 +9,7 @@
 /*   Updated: 2026/09/23 16:37:51 by tlafi            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
+//check if u need the header
 int	ft_isascii(int c)
 {
 	if (c >= 0 && c <= 127)
@@ -21,3 +21,8 @@ int	ft_isascii(int c)
 		return (0);
 	}
 }
+/*
+int	ft_isascii(int c)
+{
+	return (c >= 0 && c <= 127);
+}*/
