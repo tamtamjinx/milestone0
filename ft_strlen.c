@@ -10,11 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include<libft.h>
+#include "libft.h"
 
 size_t	ft_strlen(const char *s)
 {
-	int	i;
+	size_t	i; //read about it ++ used cz i need to retun size_t
 
 	i = 0;
 	while (s[i])
@@ -23,3 +23,29 @@ size_t	ft_strlen(const char *s)
 	}
 	return (i);
 }
+/*#include "libft.h"
+
+size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i] != '\0')
+	{
+		i++;
+	}
+	return (i);
+}
+
+/*#include <stdio.h>
+int main(int argc, char **argv)
+{
+	if (argc < 2)
+		return (0);
+	int i = 1;
+	while (i < argc)
+	{
+		printf("%s %zu\n", argv[i], ft_strlen(argv[i]));
+		i++;
+	}
+	return (0);*/
