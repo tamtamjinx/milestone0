@@ -17,8 +17,8 @@ size_t	ft_strlcpy(char *dst, const char *src, size_t size)
 		i++;
 	return (i); //return all char
 }
-
-/*#include <stdio.h>
+/*
+/**#include <stdio.h>
 #include <bsd/string.h>
 
 int main(void)
@@ -117,4 +117,4 @@ int main(void)
 	printf("   ft : \"%s\" | ret: %zu\n\n", ft_dst, ft_ret);
 
 	return (0);
-}
+}*/
