@@ -1,5 +1,5 @@
 
-int	ft_atoi(const char *nptr)
+int	ft_atoi(const char *nptr) //check with rand and edge case min
 {
 	int		i;
 	int		sign;
