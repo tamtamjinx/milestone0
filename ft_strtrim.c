@@ -1,4 +1,6 @@
-
+/*Allocates memory (using malloc(3)) and returns a
+copy of ’s1’ with characters from ’set’ removed
+from the beginning and the end.*/
 #include "libft.h"
 
 // Returns 1 if c exists in set, otherwise returns 0.
