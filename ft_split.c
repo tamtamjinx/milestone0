@@ -1,6 +1,10 @@
 
 #include "libft.h"
-
+/*The array of new strings resulting from the split.
+NULL if any allocation fails.
+The returned structure will be released using: 1)
+free() on each string in the array; 2) free() the
+array itself.*/
 // Counts how many words are separated by c.
 static int	count_words(char const *s, char c)
 {
