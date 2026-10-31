@@ -12,65 +12,84 @@
 
 #include "libft.h"
 
-static int	count_words(char const *s, char c)
+static size_t	ft_count_words(const char *s, char c)
 {
-	int	count;
-	int	in_word;
+	size_t	i;
+	size_t	count;
 
+	i = 0;
 	count = 0;
-	in_word = 0;
-	while (*s)
+	while (s[i] != '\0')
 	{
-		if (*s != c && !in_word)
-		{
+		if (s[i] != c && (s[i + 1] == c || s[i + 1] == '\0'))
 			count++;
-			in_word = 1;
-		}
-		else if (*s == c)
-			in_word = 0;
-		s++;
+		i++;
 	}
 	return (count);
 }
 
-static void	free_words(char **words, int count)
+static	char	**ft_free(char **ssplit, size_t j)
 {
-	while (count > 0)
-		free(words[--count]);
-	free(words);
+	while (j > 0)
+		free(ssplit[--j]);
+	free(ssplit);
+	return (NULL);
+}
+
+static size_t	ft_word_length(const char *s, char c, size_t i)
+{
+	size_t	len;
+
+	len = 0;
+	while (s[i + len] != '\0' && s[i + len] != c)
+		len++;
+	return (len);
+}
+
+static	char	**ft_fill(char **ssplit, const char *s, char c)
+{
+	size_t	i;
+	size_t	j;
+	size_t	length;
+
+	i = 0;
+	j = 0;
+	while (s[i] != '\0')
+	{
+		if (s[i] != c)
+		{
+			length = ft_word_length(s, c, i);
+			ssplit[j] = ft_substr(s, i, length);
+			if (!ssplit[j])
+				return (ft_free(ssplit, j));
+			j++;
+			i += length;
+		}
+		else
+			i++;
+	}
+	ssplit[j] = 0;
+	return (ssplit);
 }
 
 char	**ft_split(char const *s, char c)
 {
-	char	**words;
-	size_t	start;
-	size_t	i;
-	int		k;
+	char	**ssplit;
 
 	if (!s)
 		return (NULL);
-	words = malloc(sizeof(char *) * ((size_t)count_words(s, c) + 1));
-	if (!words)
+	ssplit = (char **)malloc((ft_count_words(s, c) + 1) * sizeof(char *));
+	if (!ssplit)
 		return (NULL);
-	i = 0;
-	k = 0;
-	while (s[i])
-	{
-		while (s[i] == c)
-			i++;
-		start = i;
-		while (s[i] && s[i] != c)
-			i++;
-		if (i > start)
-		{
-			words[k] = malloc(i - start + 1);
-			if (!words[k])
-				return (free_words(words, k), NULL);
-			ft_memcpy(words[k], s + start, i - start);
-			words[k][i - start] = '\0';
-			k++;
-		}
-	}
-	words[k] = NULL;
-	return (words);
+	return (ft_fill(ssplit, s, c));
 }
+/*
+int     main()
+{
+        char **s3=ft_split("hello,world,hi!",',');
+        printf("%s",s3[0]);
+        printf("%s",s3[1]);
+        printf("%s",s3[2]);
+        printf("%s",s3[3]);
+        free(s3);
+}*/
