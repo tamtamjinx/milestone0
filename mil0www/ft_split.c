@@ -12,76 +12,111 @@
 
 #include "libft.h"
 
-static size_t	ft_count_words(const char *s, char c)
+static int	count_words(char const *s, char c)
 {
-	size_t	i;
-	size_t	count;
+	int	inword;
+	int	i;
+	int	count;
 
-	i = 0;
 	count = 0;
-	while (s[i] != '\0')
+	i = 0;
+	inword = 0;
+	while (s[i])
 	{
-		if (s[i] != c && (s[i + 1] == c || s[i + 1] == '\0'))
+		if (s[i] != c && inword == 0)
+		{
+			inword = 1;
 			count++;
+		}
+		if (s[i] == c && inword == 1)
+			inword = 0;
 		i++;
 	}
 	return (count);
 }
 
-static	char	**ft_free(char **ssplit, size_t j)
+static char	*ft_strdup_uptoc(char const *s, int *i, char c)
 {
-	while (j > 0)
-		free(ssplit[--j]);
-	free(ssplit);
-	return (NULL);
+	int		j;
+	char	*newstr;
+
+	j = *i;
+	while (s[j] && s[j] != c)
+		j++;
+	newstr = malloc(sizeof(char) * (j - *i + 1));
+	if (!newstr)
+		return (NULL);
+	j = 0;
+	while (s[*i] && s[*i] != c)
+	{
+		newstr[j] = s[*i];
+		(*i)++;
+		j++;
+	}
+	newstr[j] = '\0';
+	return (newstr);
 }
 
-static size_t	ft_word_length(const char *s, char c, size_t i)
+static void	ft_clear(char	***strs, int ptrsc)
 {
-	size_t	len;
+	int	i;
 
-	len = 0;
-	while (s[i + len] != '\0' && s[i + len] != c)
-		len++;
-	return (len);
+	i = 0;
+	while (i < ptrsc)
+	{
+		free((*strs)[i]);
+		i++;
+	}
+	free(*strs);
 }
 
-static	char	**ft_fill(char **ssplit, const char *s, char c)
+static char	**corelogic(char const *s, char c, int words, char ***strs)
 {
-	size_t	i;
-	size_t	j;
-	size_t	length;
+	int	i;
+	int	j;
 
 	i = 0;
 	j = 0;
-	while (s[i] != '\0')
+	while (s[i])
 	{
-		if (s[i] != c)
-		{
-			length = ft_word_length(s, c, i);
-			ssplit[j] = ft_substr(s, i, length);
-			if (!ssplit[j])
-				return (ft_free(ssplit, j));
-			j++;
-			i += length;
-		}
-		else
+		if (s[i] == c)
 			i++;
+		else
+		{
+			(*strs)[j] = ft_strdup_uptoc(s, &i, c);
+			if (!(*strs)[j])
+			{
+				ft_clear(strs, j);
+				return (NULL);
+			}
+			j++;
+		}
 	}
-	ssplit[j] = 0;
-	return (ssplit);
+	(*strs)[words] = NULL;
+	return (*strs);
 }
 
 char	**ft_split(char const *s, char c)
 {
-	char	**ssplit;
+	char	**strs;
+	int		words;
 
 	if (!s)
 		return (NULL);
-	ssplit = (char **)malloc((ft_count_words(s, c) + 1) * sizeof(char *));
-	if (!ssplit)
+	words = count_words(s, c);
+	if (words > 0)
+		strs = malloc(sizeof(char *) * (words + 1));
+	else
+	{
+		strs = malloc(sizeof(char *) * 1);
+		if (!strs)
+			return (NULL);
+		strs[0] = NULL;
+		return (strs);
+	}
+	if (!strs)
 		return (NULL);
-	return (ft_fill(ssplit, s, c));
+	return (corelogic(s, c, words, &strs));
 }
 /*
 int     main()
